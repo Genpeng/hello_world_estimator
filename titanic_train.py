@@ -46,8 +46,10 @@ def input_fn_builder(
         if prefetch_factor > 0:
             dataset = dataset.prefetch(buffer_size=batch_size * prefetch_factor)
 
-        iterator = dataset.make_one_shot_iterator()
-        return iterator.get_next()
+        # iterator = dataset.make_one_shot_iterator()
+        # return iterator.get_next()
+
+        return dataset
 
     return input_fn
 
