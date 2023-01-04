@@ -22,7 +22,7 @@ def input_fn_builder(
         features = tf.io.parse_single_example(serialized, feature_spec)
         if label is not None:
             labels = features.pop(label)
-            return features, labels
+            return features, tf.cast(labels, dtype=tf.int32)
         return features
 
     def input_fn():
@@ -57,8 +57,12 @@ def input_fn_builder(
 def _get_titanic_feature_columns():
     categorical_columns = []
 
-    passenger_id_col = tf.feature_column.categorical_column_with_identity("PassengerId", num_buckets=1000)
-    passenger_embed_col = tf.feature_column.embedding_column(passenger_id_col, dimension=10)
+    passenger_id_col = tf.feature_column.categorical_column_with_identity(
+        "PassengerId", num_buckets=1001
+    )
+    passenger_embed_col = tf.feature_column.embedding_column(
+        passenger_id_col, dimension=10
+    )
     categorical_columns.append(passenger_embed_col)
 
     p_class_col = tf.feature_column.categorical_column_with_vocabulary_list(
@@ -73,12 +77,14 @@ def _get_titanic_feature_columns():
     sex_onehot_col = tf.feature_column.indicator_column(sex_col)
     categorical_columns.append(sex_onehot_col)
 
-    age_col = tf.feature_column.numeric_column("Age")
-    age_onehot_col = tf.feature_column.bucketized_column(age_col, boundaries=[18, 30, 40, 50, 60])
+    age_col = tf.feature_column.numeric_column("Age", dtype=tf.int64)
+    age_onehot_col = tf.feature_column.bucketized_column(
+        age_col, boundaries=[18, 22, 30, 40, 50, 60]
+    )
     categorical_columns.append(age_onehot_col)
 
     embarked_col = tf.feature_column.categorical_column_with_vocabulary_list(
-        "Embarked", vocabulary_list=['S', 'C', 'Q', '-1']
+        "Embarked", vocabulary_list=["S", "C", "Q", "-1"]
     )
     embarked_onehot_col = tf.feature_column.indicator_column(embarked_col)
     categorical_columns.append(embarked_onehot_col)
@@ -97,6 +103,13 @@ def _get_titanic_feature_columns():
 def main(unused_args):
     del unused_args
 
+    train_file_pattern = "input/titanic/train/*.tfrecords"
+    eval_file_pattern = "input/titanic/eval/*.tfrecords"
+    num_epochs = 100
+    train_batch_size = 32
+    eval_batch_size = 32
+    model_dir = "output/titanic_model"
+
     feature_spec = {
         "PassengerId": tf.io.FixedLenFeature([], tf.int64),
         "Survived": tf.io.FixedLenFeature([], tf.int64),
@@ -112,32 +125,32 @@ def main(unused_args):
         "Embarked": tf.io.FixedLenFeature([], tf.string),
     }
     train_input_fn = input_fn_builder(
-        "datasets/titanic/train/*.tfrecords",
+        train_file_pattern,
         feature_spec=feature_spec,
         label="Survived",
-        num_epochs=10,
-        batch_size=32,
-        shuffle_factor=10
+        num_epochs=num_epochs,
+        batch_size=train_batch_size,
+        shuffle_factor=10,
     )
     eval_input_fn = input_fn_builder(
-        "datasets/titanic/eval/*.tfrecords",
+        eval_file_pattern,
         feature_spec=feature_spec,
         label="Survived",
         num_epochs=1,
-        batch_size=32,
+        batch_size=eval_batch_size,
     )
 
     estimator = tf.estimator.DNNClassifier(
-        hidden_units=[256, 128, 64],
+        hidden_units=[32, 16],
         feature_columns=_get_titanic_feature_columns(),
-        model_dir="tmp/titanic_model/",
+        model_dir=model_dir,
         n_classes=2,
         config=tf.estimator.RunConfig(
             save_checkpoints_secs=120,
             keep_checkpoint_max=5,
             save_summary_steps=100,
             log_step_count_steps=100,
-        )
+        ),
     )
     # estimator = tf.estimator.Estimator(
     #     model_fn=model_fn_builder(),
@@ -163,7 +176,7 @@ def main(unused_args):
             steps=None,
             start_delay_secs=0,
             throttle_secs=0,  # 设置为 0 表示每次保存 checkpoints 时，都进行一次 evaluation
-        )
+        ),
     )
 
 
