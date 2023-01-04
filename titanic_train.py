@@ -22,7 +22,7 @@ def input_fn_builder(
         features = tf.io.parse_single_example(serialized, feature_spec)
         if label is not None:
             labels = features.pop(label)
-            return features, tf.cast(labels, dtype=tf.int32)
+            return features, labels
         return features
 
     def input_fn():
@@ -77,24 +77,24 @@ def _get_titanic_feature_columns():
     sex_onehot_col = tf.feature_column.indicator_column(sex_col)
     categorical_columns.append(sex_onehot_col)
 
-    age_col = tf.feature_column.numeric_column("Age", dtype=tf.int64)
+    age_col = tf.feature_column.numeric_column("Age")
     age_onehot_col = tf.feature_column.bucketized_column(
         age_col, boundaries=[18, 22, 30, 40, 50, 60]
     )
     categorical_columns.append(age_onehot_col)
 
     embarked_col = tf.feature_column.categorical_column_with_vocabulary_list(
-        "Embarked", vocabulary_list=["S", "C", "Q", "-1"]
+        "Embarked", vocabulary_list=["S", "C", "Q", "UNK"]
     )
     embarked_onehot_col = tf.feature_column.indicator_column(embarked_col)
     categorical_columns.append(embarked_onehot_col)
 
     numerical_columns = []
 
-    sibsp_col = tf.feature_column.numeric_column("SibSp", dtype=tf.int64)
+    sibsp_col = tf.feature_column.numeric_column("SibSp")
     numerical_columns.append(sibsp_col)
 
-    parch_col = tf.feature_column.numeric_column("Parch", dtype=tf.int64)
+    parch_col = tf.feature_column.numeric_column("Parch")
     numerical_columns.append(parch_col)
 
     return categorical_columns + numerical_columns
@@ -112,17 +112,17 @@ def main(unused_args):
 
     feature_spec = {
         "PassengerId": tf.io.FixedLenFeature([], tf.int64),
-        "Survived": tf.io.FixedLenFeature([], tf.int64),
         "Pclass": tf.io.FixedLenFeature([], tf.int64),
-        "Name": tf.io.FixedLenFeature([], tf.string),
+        # "Name": tf.io.FixedLenFeature([], tf.string),
         "Sex": tf.io.FixedLenFeature([], tf.string),
         "Age": tf.io.FixedLenFeature([], tf.float32),
-        "SibSp": tf.io.FixedLenFeature([], tf.int64),
-        "Parch": tf.io.FixedLenFeature([], tf.int64),
-        "Ticket": tf.io.FixedLenFeature([], tf.string),
-        "Fare": tf.io.FixedLenFeature([], tf.float32),
-        "Cabin": tf.io.FixedLenFeature([], tf.string),
+        "SibSp": tf.io.FixedLenFeature([], tf.float32),
+        "Parch": tf.io.FixedLenFeature([], tf.float32),
+        # "Ticket": tf.io.FixedLenFeature([], tf.string),
+        # "Fare": tf.io.FixedLenFeature([], tf.float32),
+        # "Cabin": tf.io.FixedLenFeature([], tf.string),
         "Embarked": tf.io.FixedLenFeature([], tf.string),
+        "Survived": tf.io.FixedLenFeature([], tf.int64),
     }
     train_input_fn = input_fn_builder(
         train_file_pattern,

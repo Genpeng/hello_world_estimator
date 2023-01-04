@@ -34,17 +34,17 @@ def get_compression_type():
 def create_titanic_example_from_series(row):
     feature_map = {
         "PassengerId": _int64_feature(int(row.PassengerId)),
-        "Survived": _int64_feature(int(row.Survived)),
         "Pclass": _int64_feature(int(row.Pclass)),
-        "Name": _bytes_feature(str(row.Name).encode("utf-8")),
+        # "Name": _bytes_feature(str(row.Name).encode("utf-8")),
         "Sex": _bytes_feature(str(row.Sex).encode("utf-8")),
-        "Age": _int64_feature(int(row.Age)),
-        "SibSp": _int64_feature(int(row.SibSp)),
-        "Parch": _int64_feature(int(row.Parch)),
-        "Ticket": _bytes_feature(str(row.Ticket).encode("utf-8")),
-        "Fare": _float_feature(float(row.Fare)),
-        "Cabin": _bytes_feature(str(row.Cabin).encode("utf-8")),
+        "Age": _float_feature(float(row.Age)),
+        "SibSp": _float_feature(float(row.SibSp)),
+        "Parch": _float_feature(float(row.Parch)),
+        # "Ticket": _bytes_feature(str(row.Ticket).encode("utf-8")),
+        # "Fare": _float_feature(float(row.Fare)),
+        # "Cabin": _bytes_feature(str(row.Cabin).encode("utf-8")),
         "Embarked": _bytes_feature(str(row.Embarked).encode("utf-8")),
+        "Survived": _int64_feature(int(row.Survived)),
     }
     return tf.train.Example(features=tf.train.Features(feature=feature_map))
 
@@ -66,10 +66,10 @@ def convert_titanic_to_tfrecord(
                 try:
                     chunk = reader.get_chunk(chunk_size)
 
-                    # fill missing value
-                    chunk["Age"] = chunk["Age"].fillna(-1.0)
-                    chunk["Cabin"] = chunk["Cabin"].fillna("-1")
-                    chunk["Embarked"] = chunk["Embarked"].fillna("-1")
+                    # fill missing values
+                    chunk["Age"] = chunk["Age"].fillna(999.0)
+                    chunk["Cabin"] = chunk["Cabin"].fillna("UNK")
+                    chunk["Embarked"] = chunk["Embarked"].fillna("UNK")
 
                     if not training:
                         chunk["Survived"] = 0
