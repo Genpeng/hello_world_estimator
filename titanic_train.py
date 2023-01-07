@@ -33,6 +33,7 @@ def input_fn_builder(
                     filename, compression_type=compression_type
                 ),
                 cycle_length=num_parallel_calls,
+                block_length=1,
                 sloppy=True,
             )
         )
@@ -105,7 +106,7 @@ def main(unused_args):
 
     train_file_pattern = "input/titanic/train/*.tfrecords"
     eval_file_pattern = "input/titanic/eval/*.tfrecords"
-    num_epochs = 100
+    num_epochs = 10000
     train_batch_size = 32
     eval_batch_size = 32
     model_dir = "output/titanic_model"
@@ -131,6 +132,7 @@ def main(unused_args):
         num_epochs=num_epochs,
         batch_size=train_batch_size,
         shuffle_factor=10,
+        prefetch_factor=10,
     )
     eval_input_fn = input_fn_builder(
         eval_file_pattern,
@@ -138,6 +140,8 @@ def main(unused_args):
         label="Survived",
         num_epochs=1,
         batch_size=eval_batch_size,
+        shuffle_factor=0,
+        prefetch_factor=10,
     )
 
     estimator = tf.estimator.DNNClassifier(
